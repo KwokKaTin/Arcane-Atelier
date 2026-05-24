@@ -575,7 +575,7 @@ namespace ArcaneAtelier.Workshop
             DrawTallRegionFrame(rect, ornateFrameSprite, new Color(0.88f, 0.74f, 0.33f));
             GUI.BeginGroup(rect);
             GUI.Label(new Rect(85f, 45f, rect.width - 156f, 24f), "Workshop Guide", titleStyle);
-            GUI.Label(new Rect(85f, 75f, rect.width - 156f, 34f), "Place machines, route outputs into matching inputs, then deploy the crafted deck.", mutedStyle);
+            GUI.Label(new Rect(85f, 75f, rect.width - 156f, 40f), "Start from an empty floor, place machines from the palette, route crafted spell cards into the battle deck collector, then enter battle.", mutedStyle);
             if (DrawThemedButton(new Rect(rect.width - 78f, 30f, 38f, 28f), "X", new Color(0.9f, 0.5f, 0.34f, 1f), buttonStyle, "close_guide"))
             {
                 showGuide = false;
@@ -594,7 +594,7 @@ namespace ArcaneAtelier.Workshop
 
             float leftX = 8f;
             float rightX = stackColumns ? 8f : leftX + columnWidth + columnGap;
-            float leftColumnHeight = 416f;
+            float leftColumnHeight = 478f;
             float rightColumnHeight = 352f;
             float stackedOffsetY = stackColumns ? leftColumnHeight + 16f : 0f;
             float contentHeight = stackColumns
@@ -604,34 +604,35 @@ namespace ArcaneAtelier.Workshop
             guideScroll = GUI.BeginScrollView(contentViewport, guideScroll, new Rect(0f, 0f, contentViewport.width - 18f, contentHeight), false, true);
 
             DrawSubPanel(new Rect(leftX, 0f, columnWidth, 180f), AtelierGold);
-            GUI.Label(new Rect(leftX + 35f, 14f, columnWidth - 28f, 20f), "Starter Layout", sectionStyle);
-            GUI.Label(new Rect(leftX + 35f, 40f, columnWidth - 28f, 38f), "Spell line: two Fire Shapers feed Spell Fusion I -> Inferno Brand.", bodyStyle);
-            GUI.Label(new Rect(leftX + 35f, 84f, columnWidth - 28f, 48f), "Element line: Water enters Element Fusion from the left, Wind enters from below, then the shaped output becomes Frost Pin.", bodyStyle);
-            GUI.Label(new Rect(leftX + 35f, 130f, columnWidth - 28f, 18f), "Broken facing stalls the whole recipe.", tinyLabelStyle);
+            GUI.Label(new Rect(leftX + 35f, 14f, columnWidth - 28f, 24f), "Build From Empty", sectionStyle);
+            GUI.Label(new Rect(leftX + 35f, 42f, columnWidth - 28f, 44f), "The workshop no longer starts with a preset starter layout. Choose blueprints from the palette and place every production line yourself.", bodyStyle);
+            GUI.Label(new Rect(leftX + 35f, 90f, columnWidth - 28f, 44f), "Send finished spell cards through spell conduits into the Battle Deck Collector. Only collected cards are added to the next battle deck.", bodyStyle);
+            GUI.Label(new Rect(leftX + 35f, 138f, columnWidth - 28f, 24f), "Wrong facing or blocked ports will stall a recipe.", tinyLabelStyle);
 
-            DrawSubPanel(new Rect(leftX, 172f, columnWidth, 274f), ArcaneBlue);
-            GUI.Label(new Rect(leftX + 35f, 186f, columnWidth - 28f, 20f), "Controls", sectionStyle);
-            DrawGuideRow(new Rect(leftX + 35f, 218f, columnWidth - 28f, 22f), "LMB", "Click place/select, hold-drag pan map");
-            DrawGuideRow(new Rect(leftX + 35f, 246f, columnWidth - 28f, 22f), "RMB Tile", "Remove selected tile");
-            DrawGuideRow(new Rect(leftX + 35f, 274f, columnWidth - 28f, 22f), "RMB Card", "Arm mirror corner conduit");
-            DrawGuideRow(new Rect(leftX + 35f, 302f, columnWidth - 28f, 22f), "R", "Rotate selected machine");
-            DrawGuideRow(new Rect(leftX + 35f, 330f, columnWidth - 28f, 22f), "Q / E", "Rotate next placement");
-            DrawGuideRow(new Rect(leftX + 35f, 358f, columnWidth - 28f, 34f), "Fusion Edge", "Click edge cycles input, output, off");
-            DrawGuideRow(new Rect(leftX + 35f, 394f, columnWidth - 28f, 22f), "Wheel", "Zoom workshop map");
+            DrawSubPanel(new Rect(leftX, 172f, columnWidth, 290f), ArcaneBlue);
+            GUI.Label(new Rect(leftX + 35f, 186f, columnWidth - 28f, 24f), "Controls", sectionStyle);
+            DrawGuideRow(new Rect(leftX + 35f, 218f, columnWidth - 28f, 24f), "LMB", "Click place/select, hold-drag pan map");
+            DrawGuideRow(new Rect(leftX + 35f, 247f, columnWidth - 28f, 24f), "RMB Tile", "Remove selected tile");
+            DrawGuideRow(new Rect(leftX + 35f, 276f, columnWidth - 28f, 24f), "RMB Card", "Arm mirror corner conduit");
+            DrawGuideRow(new Rect(leftX + 35f, 305f, columnWidth - 28f, 24f), "R", "Rotate selected machine");
+            DrawGuideRow(new Rect(leftX + 35f, 334f, columnWidth - 28f, 24f), "Q / E", "Rotate next placement");
+            DrawGuideRow(new Rect(leftX + 35f, 363f, columnWidth - 28f, 38f), "Fusion Edge", "Click edge cycles input, output, off");
+            DrawGuideRow(new Rect(leftX + 35f, 405f, columnWidth - 28f, 24f), "Wheel", "Zoom workshop map");
+            DrawGuideRow(new Rect(leftX + 35f, 434f, columnWidth - 28f, 24f), "Esc", "Return to menu");
 
             DrawSubPanel(new Rect(rightX, stackedOffsetY, columnWidth, 208f), ArcaneBlue);
-            GUI.Label(new Rect(rightX + 35f, stackedOffsetY + 14f, columnWidth - 28f, 20f), "Element Fusion", sectionStyle);
+            GUI.Label(new Rect(rightX + 35f, stackedOffsetY + 14f, columnWidth - 28f, 24f), "Element Fusion", sectionStyle);
             DrawElementRecipeRow(new Rect(rightX + 35f, stackedOffsetY + 44f, columnWidth - 28f, 24f), WorkshopElementAttribute.Wind, WorkshopElementAttribute.Water, WorkshopElementAttribute.Ice);
             DrawElementRecipeRow(new Rect(rightX + 35f, stackedOffsetY + 74f, columnWidth - 28f, 24f), WorkshopElementAttribute.Wind, WorkshopElementAttribute.Fire, WorkshopElementAttribute.Thunder);
             DrawElementRecipeRow(new Rect(rightX + 35f, stackedOffsetY + 104f, columnWidth - 28f, 24f), WorkshopElementAttribute.Earth, WorkshopElementAttribute.Fire, WorkshopElementAttribute.Light);
             DrawElementRecipeRow(new Rect(rightX + 35f, stackedOffsetY + 134f, columnWidth - 28f, 24f), WorkshopElementAttribute.Earth, WorkshopElementAttribute.Water, WorkshopElementAttribute.Dark);
 
             DrawSubPanel(new Rect(rightX, stackedOffsetY + 196f, columnWidth, 186f), SpellViolet);
-            GUI.Label(new Rect(rightX + 35f, stackedOffsetY + 210f, columnWidth - 28f, 20f), "Spell Ladder", sectionStyle);
-            GUI.Label(new Rect(rightX + 35f, stackedOffsetY + 238f, columnWidth - 28f, 24f), "Element Shaper: one element becomes one basic spell.", bodyStyle);
-            GUI.Label(new Rect(rightX + 35f, stackedOffsetY + 266f, columnWidth - 28f, 40f), "Spell Fusion I:\ntwo same-element basic spells become an intermediate spell.", bodyStyle);
-            GUI.Label(new Rect(rightX + 35f, stackedOffsetY + 294f, columnWidth - 28f, 24f), "Spell Fusion II: compatible intermediate spells become advanced spells.", bodyStyle);
-            GUI.Label(new Rect(rightX + 35f, stackedOffsetY + 322f, columnWidth - 28f, 18f), "Spell Fusion III: two matching advanced spells become final cards.", tinyLabelStyle);
+            GUI.Label(new Rect(rightX + 35f, stackedOffsetY + 210f, columnWidth - 28f, 24f), "Spell Ladder", sectionStyle);
+            GUI.Label(new Rect(rightX + 35f, stackedOffsetY + 238f, columnWidth - 28f, 28f), "Element Shaper: one element becomes one basic spell.", bodyStyle);
+            GUI.Label(new Rect(rightX + 35f, stackedOffsetY + 268f, columnWidth - 28f, 44f), "Spell Fusion I:\ntwo same-element basic spells become an intermediate spell.", bodyStyle);
+            GUI.Label(new Rect(rightX + 35f, stackedOffsetY + 306f, columnWidth - 28f, 28f), "Spell Fusion II: compatible intermediate spells become advanced spells.", bodyStyle);
+            GUI.Label(new Rect(rightX + 35f, stackedOffsetY + 336f, columnWidth - 28f, 24f), "Spell Fusion III: two matching advanced spells become final cards.", tinyLabelStyle);
 
             GUI.EndScrollView();
             GUI.EndGroup();
@@ -1317,8 +1318,10 @@ namespace ArcaneAtelier.Workshop
         private void DrawGuideRow(Rect rect, string key, string action)
         {
             float keyWidth = Mathf.Clamp(chipStyle.CalcSize(new GUIContent(key)).x + 24f, 58f, 124f);
-            DrawChip(new Rect(rect.x, rect.y, keyWidth, 20f), key, new Color(0.88f, 0.74f, 0.33f));
-            GUI.Label(new Rect(rect.x + keyWidth + 12f, rect.y + 1f, rect.width - keyWidth - 12f, rect.height - 2f), action, bodyStyle);
+            float actionWidth = rect.width - keyWidth - 12f;
+            float actionHeight = CalculateTooltipTextHeight(bodyStyle, action, actionWidth, 22f);
+            DrawChip(new Rect(rect.x, rect.y, keyWidth, 22f), key, new Color(0.88f, 0.74f, 0.33f));
+            GUI.Label(new Rect(rect.x + keyWidth + 12f, rect.y, actionWidth, Mathf.Max(rect.height, actionHeight)), action, bodyStyle);
         }
 
         private void DrawRegionFrame(Rect rect, Sprite sprite, Color accent)
