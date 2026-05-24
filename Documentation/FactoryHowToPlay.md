@@ -611,8 +611,9 @@ Current factory controls:
 - `Mouse Wheel`: zoom the workshop map in / out
 - `Space`: pause / resume time
 - `Tab`: open / close boon drawer
-- `H`: debug-load a complete endgame factory, warm it for inspection, and reset the debug preparation timer. The hack layout demonstrates Element Fusion plus four final-card routes. Each `Spell Fusion III` receives two independent `Spell Fusion II` branches and routes final cards into `Battle Deck Collector` blocks.
+- `H`: debug-load a complete endgame factory, warm it for inspection, and reset the preparation timer to the 3500-tick demo factory budget. The hack layout demonstrates Element Fusion plus four final-card routes. Each `Spell Fusion III` receives two independent `Spell Fusion II` branches and routes final cards into `Battle Deck Collector` blocks.
 - `F1`: show / hide control guide
+- `Esc`: open the return-to-menu confirmation. `No` or `Esc` cancels; `Yes` abandons the current run without saving workshop progress.
 
 ---
 

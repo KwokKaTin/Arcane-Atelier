@@ -27,6 +27,8 @@ namespace ArcaneAtelier.Workshop
         private string statusMessage = "Spell Assembly ready.";
         private bool isPaused;
         private bool isDeploying;
+        private bool isReturnToMenuPromptOpen;
+        private bool wasPausedBeforeReturnToMenuPrompt;
         private int totalPreparationTicks;
         private int remainingPreparationTicks;
         private string encounterLabel = "Skirmish";
@@ -446,6 +448,43 @@ namespace ArcaneAtelier.Workshop
             SceneManager.LoadScene("BattleScene");
         }
 
+        public void SetReturnToMenuPromptOpen(bool isOpen)
+        {
+            if (isReturnToMenuPromptOpen == isOpen)
+            {
+                return;
+            }
+
+            isReturnToMenuPromptOpen = isOpen;
+            if (isOpen)
+            {
+                wasPausedBeforeReturnToMenuPrompt = isPaused;
+                isPaused = true;
+                Time.timeScale = 0f;
+                return;
+            }
+
+            isPaused = wasPausedBeforeReturnToMenuPrompt;
+            Time.timeScale = isPaused ? 0f : 1f;
+        }
+
+        public void ReturnToMainMenuWithoutSaving()
+        {
+            if (isDeploying)
+            {
+                return;
+            }
+
+            isDeploying = true;
+            isReturnToMenuPromptOpen = false;
+            isPaused = false;
+            Time.timeScale = 1f;
+            WorkshopBattlePayloadBridge.Clear();
+            WorkshopRunStateBridge.Clear();
+            RunProgressBridge.Reset();
+            SceneManager.LoadScene("MainMenuScene");
+        }
+
         public void CommitBattlePayload()
         {
             if (Simulation == null)
@@ -519,6 +558,11 @@ namespace ArcaneAtelier.Workshop
         private void HandleGlobalShortcuts()
         {
             if (Simulation == null)
+            {
+                return;
+            }
+
+            if (isReturnToMenuPromptOpen)
             {
                 return;
             }

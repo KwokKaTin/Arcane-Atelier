@@ -17,7 +17,12 @@ namespace ArcaneAtelier.Workshop
         private const float PaletteCardHeight = 108f;
         private const int PaletteVisibleRows = 2;
         private const float BottomDockHeight = PaletteHeaderHeight + PaletteVisibleRows * PaletteCardHeight + (PaletteVisibleRows + 1) * PaletteCardSpacing + 16f;
-        private const float TopHudHeight = 94f;
+        private const float ThroughputPanelHeight = 126f;
+        private const float ControlPanelHeight = 76f;
+        private const float StatusPanelHeight = 76f;
+        private const float LegacySigilStripHeight = 44f;
+        private const float LegacySigilStripOffsetY = 82f;
+        private const float TopHudHeight = 136f;
 
         private static readonly Color HudBackground = new Color(0.035f, 0.052f, 0.085f, 0.94f);
         private static readonly Color HudPanel = new Color(0.075f, 0.105f, 0.15f, 0.93f);
@@ -33,6 +38,7 @@ namespace ArcaneAtelier.Workshop
         private Vector2 guideScroll;
         private bool showGuide;
         private bool showRewards;
+        private bool showReturnToMenuPrompt;
         private int paletteTabIndex;
         private WorkshopSceneController controller;
 
@@ -98,8 +104,21 @@ namespace ArcaneAtelier.Workshop
 
             if (Input.GetKeyDown(KeyCode.Escape))
             {
+                if (showReturnToMenuPrompt)
+                {
+                    HideReturnToMenuPrompt();
+                    return;
+                }
+
                 showGuide = false;
                 showRewards = false;
+                ShowReturnToMenuPrompt();
+                return;
+            }
+
+            if (showReturnToMenuPrompt)
+            {
+                return;
             }
 
             if (Input.GetKeyDown(KeyCode.F1))
@@ -133,12 +152,19 @@ namespace ArcaneAtelier.Workshop
             Rect rightRailRect = BuildRightRailRect(metaRect);
             var paletteRect = new Rect(Margin, Screen.height - BottomDockHeight - Margin, Screen.width - Margin * 2f, BottomDockHeight);
 
+            bool previousGuiEnabled = GUI.enabled;
+            if (showReturnToMenuPrompt)
+            {
+                GUI.enabled = false;
+            }
+
             DrawThroughputPanel(topLeftRect);
             DrawStatusPanel(topCenterRect);
             DrawControlPanel(topRightRect);
             DrawRightRail(rightRailRect);
             DrawPaletteDock(paletteRect);
             DrawLegacySigilStrip(metaRect);
+            GUI.enabled = previousGuiEnabled;
 
             if (showRewards)
             {
@@ -151,6 +177,11 @@ namespace ArcaneAtelier.Workshop
             if (showGuide)
             {
                 DrawGuideOverlay(BuildGuideOverlayRect());
+            }
+
+            if (showReturnToMenuPrompt)
+            {
+                DrawReturnToMenuPrompt(BuildReturnToMenuPromptRect());
             }
         }
 
@@ -172,14 +203,14 @@ namespace ArcaneAtelier.Workshop
             DrawRegionFrame(rect, topLeftPanelSprite, new Color(0.78f, 0.61f, 0.31f));
 
             GUI.BeginGroup(rect);
-            GUI.Label(new Rect(32f, 16f, 220f, 24f), "Arcane Atelier", titleStyle);
-            GUI.Label(new Rect(32f, 40f, 220f, 18f), "Workshop", mutedStyle);
+            GUI.Label(new Rect(32f, 18f, 220f, 24f), "Arcane Atelier", titleStyle);
+            GUI.Label(new Rect(32f, 44f, 220f, 18f), "Workshop", mutedStyle);
 
-            DrawMiniStat(new Rect(32f, 61f, 52f, 28f), $"{controller.RemainingPreparationTicks}", "Ticks");
-            DrawMiniStat(new Rect(90f, 61f, 60f, 28f), $"{stats.ElementProductionPerSecond:0.0}", "Flow");
-            DrawMiniStat(new Rect(156f, 61f, 52f, 28f), $"{stats.SpellProductionPerSecond:0.0}", "Spell");
-            DrawMiniStat(new Rect(214f, 61f, 52f, 28f), $"{stats.ElementConsumptionPerSecond:0.0}", "Use");
-            DrawMiniStat(new Rect(272f, 61f, 58f, 28f), $"{controller.Tokens}", "Tokens");
+            DrawMiniStat(new Rect(32f, 72f, 58f, 40f), $"{controller.RemainingPreparationTicks}", "Ticks");
+            DrawMiniStat(new Rect(96f, 72f, 58f, 40f), $"{stats.ElementProductionPerSecond:0.0}", "Flow");
+            DrawMiniStat(new Rect(160f, 72f, 52f, 40f), $"{stats.SpellProductionPerSecond:0.0}", "Spell");
+            DrawMiniStat(new Rect(218f, 72f, 52f, 40f), $"{stats.ElementConsumptionPerSecond:0.0}", "Use");
+            DrawMiniStat(new Rect(276f, 72f, 56f, 40f), $"{controller.Tokens}", "Tokens");
             GUI.EndGroup();
         }
 
@@ -188,8 +219,8 @@ namespace ArcaneAtelier.Workshop
             DrawRegionFrame(rect, statusBarSprite, new Color(0.54f, 0.4f, 0.85f));
 
             GUI.BeginGroup(rect);
-            GUI.Label(new Rect(60f, 10f, rect.width - 68f, 18f), "Status", sectionStyle);
-            GUI.Label(new Rect(60f, 28f, rect.width - 80f, 27f), controller.StatusMessage, statusBarStyle);
+            GUI.Label(new Rect(60f, 12f, rect.width - 68f, 18f), "Status", sectionStyle);
+            GUI.Label(new Rect(60f, 32f, rect.width - 80f, 36f), controller.StatusMessage, statusBarStyle);
             GUI.EndGroup();
         }
 
@@ -595,6 +626,52 @@ namespace ArcaneAtelier.Workshop
             GUI.EndGroup();
         }
 
+        private void DrawReturnToMenuPrompt(Rect rect)
+        {
+            DrawRect(new Rect(0f, 0f, Screen.width, Screen.height), new Color(0f, 0f, 0f, 0.62f));
+            DrawTallRegionFrame(rect, ornateFrameSprite, AtelierGold);
+
+            GUI.BeginGroup(rect);
+            GUI.Label(new Rect(42f, 34f, rect.width - 84f, 28f), "Return To Main Menu?", titleStyle);
+            GUI.Label(
+                new Rect(44f, 76f, rect.width - 88f, 54f),
+                "Current workshop progress will be abandoned. Nothing from this run will be saved.",
+                bodyStyle);
+
+            float buttonWidth = 128f;
+            float buttonHeight = 34f;
+            float gap = 18f;
+            float startX = (rect.width - buttonWidth * 2f - gap) * 0.5f;
+            float buttonY = rect.height - 64f;
+
+            if (DrawThemedButton(new Rect(startX, buttonY, buttonWidth, buttonHeight), "No", ArcaneBlue, buttonStyle, "cancel_return_to_menu"))
+            {
+                HideReturnToMenuPrompt();
+            }
+
+            if (DrawThemedButton(new Rect(startX + buttonWidth + gap, buttonY, buttonWidth, buttonHeight), "Yes", AtelierGold, buttonStyle, "confirm_return_to_menu"))
+            {
+                showReturnToMenuPrompt = false;
+                controller.ReturnToMainMenuWithoutSaving();
+            }
+
+            GUI.EndGroup();
+        }
+
+        private void ShowReturnToMenuPrompt()
+        {
+            showReturnToMenuPrompt = true;
+            showGuide = false;
+            showRewards = false;
+            controller.SetReturnToMenuPromptOpen(true);
+        }
+
+        private void HideReturnToMenuPrompt()
+        {
+            showReturnToMenuPrompt = false;
+            controller.SetReturnToMenuPromptOpen(false);
+        }
+
         private void DrawPaletteDock(Rect rect)
         {
             DrawRegionFrame(rect, paletteDockSprite, new Color(0.88f, 0.74f, 0.33f));
@@ -631,7 +708,7 @@ namespace ArcaneAtelier.Workshop
 
         private void DrawHoverTooltip()
         {
-            if (controller == null || controller.HoveredCell.x < 0 || showGuide)
+            if (controller == null || controller.HoveredCell.x < 0 || showGuide || showReturnToMenuPrompt)
             {
                 return;
             }
@@ -805,26 +882,26 @@ namespace ArcaneAtelier.Workshop
 
         private static Rect BuildThroughputPanelRect()
         {
-            return new Rect(Margin, Margin, ThroughputPanelWidth, 110f);
+            return new Rect(Margin, Margin, ThroughputPanelWidth, ThroughputPanelHeight);
         }
 
         private static Rect BuildControlPanelRect()
         {
-            return new Rect(Screen.width - ControlPanelWidth - Margin, Margin, ControlPanelWidth, 60f);
+            return new Rect(Screen.width - ControlPanelWidth - Margin, Margin, ControlPanelWidth, ControlPanelHeight);
         }
 
         private static Rect BuildStatusPanelRect(Rect throughputRect, Rect controlRect)
         {
             float x = throughputRect.xMax + TopPanelGap;
             float width = Mathf.Max(240f, controlRect.xMin - x - Margin);
-            return new Rect(x, Margin, width, 62f);
+            return new Rect(x, Margin, width, StatusPanelHeight);
         }
 
         private static Rect BuildLegacySigilStripRect(Rect throughputRect, Rect controlRect)
         {
             float x = throughputRect.xMax + TopPanelGap;
             float width = Mathf.Max(240f, controlRect.xMin - x - Margin);
-            return new Rect(x, throughputRect.y + 70f, width, 40f);
+            return new Rect(x, throughputRect.y + LegacySigilStripOffsetY, width, LegacySigilStripHeight);
         }
 
         private static Rect BuildRightRailRect(Rect metaRect)
@@ -856,6 +933,13 @@ namespace ArcaneAtelier.Workshop
         {
             float width = Mathf.Clamp(Screen.width - 96f, 760f, 980f);
             float height = Mathf.Clamp(Screen.height - 88f, 520f, 700f);
+            return new Rect((Screen.width - width) * 0.5f, (Screen.height - height) * 0.5f, width, height);
+        }
+
+        private static Rect BuildReturnToMenuPromptRect()
+        {
+            float width = Mathf.Min(460f, Screen.width - 64f);
+            float height = 196f;
             return new Rect((Screen.width - width) * 0.5f, (Screen.height - height) * 0.5f, width, height);
         }
 
@@ -1045,8 +1129,8 @@ namespace ArcaneAtelier.Workshop
             DrawRect(rect, new Color(0.07f, 0.095f, 0.135f, 0.78f));
             DrawOutline(rect, new Color(AtelierGold.r, AtelierGold.g, AtelierGold.b, 0.42f));
             DrawRect(new Rect(rect.x + 4f, rect.y + 3f, rect.width - 8f, 1f), new Color(1f, 1f, 1f, 0.08f));
-            GUI.Label(new Rect(rect.x, rect.y + 3f, rect.width, 14f), value, statValueStyle);
-            GUI.Label(new Rect(rect.x, rect.y + 16f, rect.width, 12f), label, statLabelStyle);
+            GUI.Label(new Rect(rect.x, rect.y + 5f, rect.width, 16f), value, statValueStyle);
+            GUI.Label(new Rect(rect.x, rect.y + 22f, rect.width, 16f), label, statLabelStyle);
         }
 
         private static Sprite ResolveNodeSprite(WorkshopNodeDefinition node)
@@ -1647,7 +1731,7 @@ namespace ArcaneAtelier.Workshop
             statLabelStyle = new GUIStyle(GUI.skin.label)
             {
                 fontSize = 9,
-                alignment = TextAnchor.UpperCenter,
+                alignment = TextAnchor.MiddleCenter,
                 normal = { textColor = HudMuted }
             };
 
