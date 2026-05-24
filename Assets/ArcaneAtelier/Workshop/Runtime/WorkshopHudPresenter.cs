@@ -12,17 +12,24 @@ namespace ArcaneAtelier.Workshop
         private const float ControlPanelWidth = 236f;
         private const float TopPanelGap = 20f;
         private const float RightRailWidth = 380f;
-        private const float PaletteHeaderHeight = 124f;
-        private const float PaletteCardSpacing = 12f;
-        private const float PaletteCardHeight = 108f;
+        private const float PaletteVerticalScale = 0.8f;
+        private const float PaletteHeaderHeightBase = 124f;
+        private const float PaletteCardSpacingBase = 12f;
+        private const float PaletteCardHeightBase = 108f;
+        private const float PaletteBottomPaddingBase = 16f;
         private const int PaletteVisibleRows = 2;
-        private const float BottomDockHeight = PaletteHeaderHeight + PaletteVisibleRows * PaletteCardHeight + (PaletteVisibleRows + 1) * PaletteCardSpacing + 16f;
         private const float ThroughputPanelHeight = 126f;
         private const float ControlPanelHeight = 76f;
         private const float StatusPanelHeight = 76f;
         private const float LegacySigilStripHeight = 44f;
         private const float LegacySigilStripOffsetY = 82f;
         private const float TopHudHeight = 136f;
+
+        private static float PaletteHeaderHeight => PaletteHeaderHeightBase * PaletteVerticalScale;
+        private static float PaletteCardSpacing => PaletteCardSpacingBase * PaletteVerticalScale;
+        private static float PaletteCardHeight => PaletteCardHeightBase * PaletteVerticalScale;
+        private static float PaletteBottomPadding => PaletteBottomPaddingBase * PaletteVerticalScale;
+        private static float BottomDockHeight => PaletteHeaderHeight + PaletteVisibleRows * PaletteCardHeight + (PaletteVisibleRows + 1) * PaletteCardSpacing + PaletteBottomPadding;
 
         private static readonly Color HudBackground = new Color(0.035f, 0.052f, 0.085f, 0.94f);
         private static readonly Color HudPanel = new Color(0.075f, 0.105f, 0.15f, 0.93f);
@@ -390,12 +397,16 @@ namespace ArcaneAtelier.Workshop
 
             Vector2 mouse = Event.current != null ? Event.current.mousePosition : Vector2.zero;
             float width = 312f;
-            float bodyHeight = Mathf.Max(20f, bodyStyle.CalcHeight(new GUIContent(hoveredMetaBody), width - 28f));
-            Rect rect = PositionUiTooltip(mouse, width, 44f + bodyHeight);
+            float contentWidth = width - 56f;
+            float titleHeight = CalculateTooltipTextHeight(sectionStyle, hoveredMetaTitle, contentWidth, 20f);
+            float bodyHeight = CalculateTooltipTextHeight(bodyStyle, hoveredMetaBody, contentWidth, 20f);
+            Rect rect = PositionUiTooltip(mouse, width, 30f + titleHeight + bodyHeight);
             DrawTooltipFrame(rect, hoveredMetaAccent);
             GUI.BeginGroup(rect);
-            GUI.Label(new Rect(40f, 12f, rect.width - 28f, 18f), hoveredMetaTitle, sectionStyle);
-            GUI.Label(new Rect(40f, 34f, rect.width - 28f, bodyHeight), hoveredMetaBody, bodyStyle);
+            float contentY = 12f;
+            GUI.Label(new Rect(28f, contentY, contentWidth, titleHeight), hoveredMetaTitle, sectionStyle);
+            contentY += titleHeight + 6f;
+            GUI.Label(new Rect(28f, contentY, contentWidth, bodyHeight), hoveredMetaBody, bodyStyle);
             GUI.EndGroup();
         }
 
@@ -677,13 +688,13 @@ namespace ArcaneAtelier.Workshop
             DrawRegionFrame(rect, paletteDockSprite, new Color(0.88f, 0.74f, 0.33f));
 
             GUI.BeginGroup(rect);
-            GUI.Label(new Rect(65f, 25f, 220f, 24f), "Workshop Palette", titleStyle);
-            GUI.Label(new Rect(65f, 49f, rect.width - 68f, 18f), "Choose a blueprint. LMB arms default, RMB arms mirror on corner conduits. Short LMB places/selects; hold LMB and drag pans.", mutedStyle);
-            DrawElementLegend(new Rect(65f, 69f, 272f, 18f));
+            GUI.Label(new Rect(65f, ScalePaletteY(25f), 220f, 24f), "Workshop Palette", titleStyle);
+            GUI.Label(new Rect(65f, ScalePaletteY(49f), rect.width - 68f, 18f), "Choose a blueprint. LMB arms default, RMB arms mirror on corner conduits. Short LMB places/selects; hold LMB and drag pans.", mutedStyle);
+            DrawElementLegend(new Rect(65f, ScalePaletteY(69f), 272f, 18f));
 
-            DrawPaletteTabs(new Rect(65f, 95f, rect.width - 68f, 28f));
+            DrawPaletteTabs(new Rect(65f, ScalePaletteY(95f), rect.width - 68f, ScalePaletteY(28f)));
 
-            var contentRect = new Rect(47f, PaletteHeaderHeight, rect.width - 80f, rect.height - 140f);
+            var contentRect = new Rect(47f, PaletteHeaderHeight, rect.width - 80f, rect.height - PaletteHeaderHeight - PaletteBottomPadding);
             var nodes = GetPaletteNodesForActiveTab();
             int columns = Mathf.Max(1, Mathf.FloorToInt((contentRect.width + PaletteCardSpacing) / (312f + PaletteCardSpacing)));
             float cardWidth = Mathf.Floor((contentRect.width - PaletteCardSpacing * (columns + 1)) / columns);
@@ -725,38 +736,72 @@ namespace ArcaneAtelier.Workshop
                 ? System.Array.Empty<System.Collections.Generic.KeyValuePair<WorkshopItemDefinition, int>>()
                 : node.EnumerateBuffer().Where(pair => pair.Key != null && pair.Value > 0).ToArray();
             float tooltipWidth = showBufferDetails ? 404f : node == null ? 246f : 320f;
+            float contentWidth = tooltipWidth - 56f;
+            string titleText = node == null ? "Empty Tile" : node.Definition.DisplayName;
+            string cellText = $"Cell {controller.HoveredCell.x}, {controller.HoveredCell.y}";
+            float titleHeight = CalculateTooltipTextHeight(sectionStyle, titleText, contentWidth, 20f);
+            float cellHeight = CalculateTooltipTextHeight(tinyLabelStyle, cellText, contentWidth, 14f);
             float descriptionHeight = node == null
                 ? 0f
-                : Mathf.Max(34f, bodyStyle.CalcHeight(new GUIContent(node.Definition.Description), tooltipWidth - 56f));
+                : CalculateTooltipTextHeight(bodyStyle, node.Definition.Description, contentWidth, 34f);
             float bufferHeight = showBufferDetails ? CalculateTooltipBufferHeight(node, bufferEntries) : 0f;
-            float tooltipHeight = node == null
-                ? 90f
-                : 94f + descriptionHeight + 24f + (showBufferDetails ? bufferHeight + 14f : 0f);
+            float tooltipHeight;
+            float categoryHeight = 0f;
+            float statsHeight = 0f;
+            float emptyTileHintHeight = 0f;
+            if (node == null)
+            {
+                emptyTileHintHeight = CalculateTooltipTextHeight(bodyStyle, "LMB place armed machine", contentWidth, 18f);
+                tooltipHeight = 30f + titleHeight + cellHeight + emptyTileHintHeight;
+            }
+            else
+            {
+                categoryHeight = CalculateTooltipTextHeight(tinyLabelStyle, node.Definition.Category.ToString(), contentWidth, 14f);
+                string activeText = node.IsRecentlyActive ? "Active" : "Idle";
+                string statsText = $"Rot {node.RotationQuarterTurns * 90}°  Buffer {node.BufferedItemCount}/{node.Definition.BufferCapacity}  {activeText}";
+                statsHeight = CalculateTooltipTextHeight(tinyLabelStyle, statsText, contentWidth, 14f);
+                tooltipHeight = 46f + titleHeight + cellHeight + categoryHeight + descriptionHeight + statsHeight + (showBufferDetails ? bufferHeight + 14f : 0f);
+            }
             Rect rect = PositionTooltip(mouse, tooltipWidth, tooltipHeight);
 
             DrawHoverCardFrame(rect, node == null ? new Color(0.42f, 0.54f, 0.7f) : GetCategoryColor(node.Definition.Category, node.Definition.Tint));
             GUI.BeginGroup(rect);
-            GUI.Label(new Rect(28f, 18f, rect.width - 28f, 18f), node == null ? "Empty Tile" : node.Definition.DisplayName, sectionStyle);
-            GUI.Label(new Rect(28f, 36f, rect.width - 28f, 18f), $"Cell {controller.HoveredCell.x}, {controller.HoveredCell.y}", tinyLabelStyle);
+            float contentY = 18f;
+            GUI.Label(new Rect(28f, contentY, contentWidth, titleHeight), titleText, sectionStyle);
+            contentY += titleHeight + 2f;
+            GUI.Label(new Rect(28f, contentY, contentWidth, cellHeight), cellText, tinyLabelStyle);
+            contentY += cellHeight + 6f;
 
             if (node == null)
             {
-                GUI.Label(new Rect(28f, 56f, rect.width - 28f, 18f), "LMB place armed machine", bodyStyle);
+                GUI.Label(new Rect(28f, contentY, contentWidth, emptyTileHintHeight), "LMB place armed machine", bodyStyle);
             }
             else
             {
-                GUI.Label(new Rect(28f, 56f, rect.width - 28f, 18f), node.Definition.Category.ToString(), tinyLabelStyle);
-                GUI.Label(new Rect(28f, 74f, rect.width - 28f, descriptionHeight), node.Definition.Description, bodyStyle);
+                GUI.Label(new Rect(28f, contentY, contentWidth, categoryHeight), node.Definition.Category.ToString(), tinyLabelStyle);
+                contentY += categoryHeight + 4f;
+                GUI.Label(new Rect(28f, contentY, contentWidth, descriptionHeight), node.Definition.Description, bodyStyle);
+                contentY += descriptionHeight + 8f;
                 string activeText = node.IsRecentlyActive ? "Active" : "Idle";
-                float statsY = 68f + descriptionHeight + 8f;
-                GUI.Label(new Rect(28f, statsY, rect.width - 28f, 18f), $"Rot {node.RotationQuarterTurns * 90}°  Buffer {node.BufferedItemCount}/{node.Definition.BufferCapacity}  {activeText}", tinyLabelStyle);
+                GUI.Label(new Rect(28f, contentY, contentWidth, statsHeight), $"Rot {node.RotationQuarterTurns * 90}°  Buffer {node.BufferedItemCount}/{node.Definition.BufferCapacity}  {activeText}", tinyLabelStyle);
                 if (showBufferDetails)
                 {
-                    DrawTooltipBuffer(new Rect(28f, statsY + 22f, rect.width - 56f, bufferHeight), node, bufferEntries);
+                    DrawTooltipBuffer(new Rect(28f, contentY + statsHeight + 8f, rect.width - 56f, bufferHeight), node, bufferEntries);
                 }
             }
 
             GUI.EndGroup();
+        }
+
+        private static float CalculateTooltipTextHeight(GUIStyle style, string text, float width, float minHeight)
+        {
+            if (style == null)
+            {
+                return minHeight;
+            }
+
+            float calculatedHeight = style.CalcHeight(new GUIContent(string.IsNullOrEmpty(text) ? " " : text), width);
+            return Mathf.Max(minHeight, Mathf.Ceil(calculatedHeight + 4f));
         }
 
         private Rect PositionTooltip(Vector2 mouse, float tooltipWidth, float tooltipHeight)
@@ -1031,14 +1076,14 @@ namespace ArcaneAtelier.Workshop
             var mirrorSelected = mirrorNode != null && selectedNode == mirrorNode;
             var accent = GetCategoryColor(node.Category, node.Tint);
             bool isHover = IsInteractiveHover(rect, unlocked, $"palette_node_{node.Id}");
-            float lift = isHover ? 3f : 0f;
+            float lift = isHover ? ScalePaletteY(3f) : 0f;
             Rect drawRect = new Rect(rect.x, rect.y - lift, rect.width, rect.height);
 
             if (blueprintCardSprite != null)
             {
-                DrawRect(new Rect(drawRect.x + 3f, drawRect.y + 4f, drawRect.width, drawRect.height), new Color(0f, 0f, 0f, 0.18f));
+                DrawRect(new Rect(drawRect.x + 3f, drawRect.y + ScalePaletteY(4f), drawRect.width, drawRect.height), new Color(0f, 0f, 0f, 0.18f));
                 DrawSprite(drawRect, blueprintCardSprite, Color.white);
-                DrawRect(new Rect(drawRect.x + 10f, drawRect.y + 10f, drawRect.width - 20f, drawRect.height - 20f), new Color(accent.r, accent.g, accent.b, selected ? 0.11f : isHover ? 0.07f : 0.03f));
+                DrawRect(new Rect(drawRect.x + 10f, drawRect.y + ScalePaletteY(10f), drawRect.width - 20f, drawRect.height - ScalePaletteY(20f)), new Color(accent.r, accent.g, accent.b, selected ? 0.11f : isHover ? 0.07f : 0.03f));
             }
             else
             {
@@ -1049,12 +1094,12 @@ namespace ArcaneAtelier.Workshop
                     ? new Color(0.99f, 0.86f, 0.5f, 0.95f)
                     : new Color(accent.r, accent.g, accent.b, isHover ? 0.8f : 0.58f);
                 Color badgeFill = new Color(accent.r, accent.g, accent.b, selected || isHover ? 0.24f : 0.14f);
-                DrawRect(new Rect(drawRect.x + 3f, drawRect.y + 4f, drawRect.width, drawRect.height), new Color(0f, 0f, 0f, 0.2f));
+                DrawRect(new Rect(drawRect.x + 3f, drawRect.y + ScalePaletteY(4f), drawRect.width, drawRect.height), new Color(0f, 0f, 0f, 0.2f));
                 DrawRect(drawRect, cardFill);
                 DrawOutline(drawRect, cardOutline);
-                DrawRect(new Rect(drawRect.x, drawRect.y, drawRect.width, 5f), accent);
-                DrawRect(new Rect(drawRect.x + 8f, drawRect.y + 10f, 30f, 34f), badgeFill);
-                DrawRect(new Rect(drawRect.x + 8f, drawRect.y + drawRect.height - 8f, drawRect.width - 16f, 1f), new Color(1f, 1f, 1f, 0.045f));
+                DrawRect(new Rect(drawRect.x, drawRect.y, drawRect.width, ScalePaletteY(5f)), accent);
+                DrawRect(new Rect(drawRect.x + 8f, drawRect.y + ScalePaletteY(10f), 30f, ScalePaletteY(34f)), badgeFill);
+                DrawRect(new Rect(drawRect.x + 8f, drawRect.y + drawRect.height - ScalePaletteY(8f), drawRect.width - 16f, 1f), new Color(1f, 1f, 1f, 0.045f));
             }
 
             Event current = Event.current;
@@ -1077,18 +1122,22 @@ namespace ArcaneAtelier.Workshop
 
             var iconSprite = ResolveNodeSprite(node);
             var iconTint = ResolveNodeSpriteTint(node);
-            if (!DrawSprite(new Rect(drawRect.x + 26f, drawRect.y + 24f, 47f, 47f), iconSprite, iconTint))
+            if (iconSprite != null)
             {
-                GUI.Label(new Rect(drawRect.x + 29f, drawRect.y + 27f, 40f, 40f), GetCategorySymbol(node.Category), iconStyle);
+                DrawSpritePreserveAspect(new Rect(drawRect.x + 26f, drawRect.y + ScalePaletteY(24f), 47f, ScalePaletteY(47f)), iconSprite, iconTint);
             }
-            DrawNodeElementBadge(new Rect(drawRect.x + drawRect.width - 40f, drawRect.y + 11f, 24f, 24f), node);
-            GUI.Label(new Rect(drawRect.x + 95f, drawRect.y + 13f, drawRect.width - 164f, 18f), node.DisplayName, blueprintTitleStyle);
-            GUI.Label(new Rect(drawRect.x + 95f, drawRect.y + 40f, drawRect.width - 116f, 16f), node.Category.ToString(), blueprintMetaStyle);
-            GUI.Label(new Rect(drawRect.x + 95f, drawRect.y + 64f, drawRect.width - 116f, 16f), unlocked ? "Ready" : "Locked reward", blueprintMetaStyle);
+            else
+            {
+                GUI.Label(new Rect(drawRect.x + 29f, drawRect.y + ScalePaletteY(27f), 40f, 40f), GetCategorySymbol(node.Category), iconStyle);
+            }
+            DrawNodeElementBadge(new Rect(drawRect.x + drawRect.width - 40f, drawRect.y + ScalePaletteY(11f), ScalePaletteY(24f), ScalePaletteY(24f)), node);
+            GUI.Label(new Rect(drawRect.x + 95f, drawRect.y + ScalePaletteY(13f), drawRect.width - 164f, 18f), node.DisplayName, blueprintTitleStyle);
+            GUI.Label(new Rect(drawRect.x + 95f, drawRect.y + ScalePaletteY(40f), drawRect.width - 116f, 16f), node.Category.ToString(), blueprintMetaStyle);
+            GUI.Label(new Rect(drawRect.x + 95f, drawRect.y + ScalePaletteY(64f), drawRect.width - 116f, 16f), unlocked ? "Ready" : "Locked reward", blueprintMetaStyle);
 
             if (mirrorNode != null)
             {
-                DrawCornerVariantStrip(new Rect(drawRect.x + 24f, drawRect.y + drawRect.height - 19f, drawRect.width - 48f, 18f), node, mirrorNode, mirrorSelected, unlocked);
+                DrawCornerVariantStrip(new Rect(drawRect.x + 24f, drawRect.y + drawRect.height - ScalePaletteY(19f), drawRect.width - 48f, ScalePaletteY(18f)), node, mirrorNode, mirrorSelected, unlocked);
             }
 
             if (!unlocked)
@@ -1103,10 +1152,10 @@ namespace ArcaneAtelier.Workshop
             DrawRect(rect, new Color(0.045f, 0.065f, 0.095f, 0.94f));
             DrawOutline(rect, new Color(HudStroke.r, HudStroke.g, HudStroke.b, 0.56f));
 
-            var leftPreview = new Rect(rect.x + 6f, rect.y + 2f, 14f, 14f);
-            var rightPreview = new Rect(rect.x + 26f, rect.y + 2f, 14f, 14f);
-            var defaultHighlight = new Rect(rect.x + 4f, rect.y + 1f, 18f, 16f);
-            var mirrorHighlight = new Rect(rect.x + 24f, rect.y + 1f, 18f, 16f);
+            var leftPreview = new Rect(rect.x + 6f, rect.y + ScalePaletteY(2f), ScalePaletteY(14f), ScalePaletteY(14f));
+            var rightPreview = new Rect(rect.x + 26f, rect.y + ScalePaletteY(2f), ScalePaletteY(14f), ScalePaletteY(14f));
+            var defaultHighlight = new Rect(rect.x + 4f, rect.y + ScalePaletteY(1f), ScalePaletteY(18f), ScalePaletteY(16f));
+            var mirrorHighlight = new Rect(rect.x + 24f, rect.y + ScalePaletteY(1f), ScalePaletteY(18f), ScalePaletteY(16f));
             if (mirrorSelected)
             {
                 DrawRect(mirrorHighlight, new Color(AtelierGold.r, AtelierGold.g, AtelierGold.b, 0.25f));
@@ -1120,8 +1169,8 @@ namespace ArcaneAtelier.Workshop
 
             DrawSprite(leftPreview, ResolveNodeSprite(primaryNode), ResolveNodeSpriteTint(primaryNode));
             DrawSprite(rightPreview, ResolveNodeSprite(mirrorNode), ResolveNodeSpriteTint(mirrorNode), true);
-            GUI.Label(new Rect(rect.x + 50f, rect.y + 1f, 60f, 16f), mirrorSelected ? "Mirror" : "Default", blueprintModeStyle);
-            GUI.Label(new Rect(rect.x + 108f, rect.y + 1f, rect.width - 114f, 16f), unlocked ? "LMB default  RMB mirror" : "Unlock to arm", blueprintModeStyle);
+            GUI.Label(new Rect(rect.x + 50f, rect.y + ScalePaletteY(1f), 60f, 16f), mirrorSelected ? "Mirror" : "Default", blueprintModeStyle);
+            GUI.Label(new Rect(rect.x + 108f, rect.y + ScalePaletteY(1f), rect.width - 114f, 16f), unlocked ? "LMB default  RMB mirror" : "Unlock to arm", blueprintModeStyle);
         }
 
         private void DrawMiniStat(Rect rect, string value, string label)
@@ -1150,6 +1199,11 @@ namespace ArcaneAtelier.Workshop
             return node == null
                 ? Color.white
                 : ArcaneArtCatalog.GetWorkshopNodeTint(node.Id);
+        }
+
+        private static float ScalePaletteY(float value)
+        {
+            return value * PaletteVerticalScale;
         }
 
         private void DrawChipWrap(float startX, float startY, float maxWidth, (string Text, Color Tint)[] items)
